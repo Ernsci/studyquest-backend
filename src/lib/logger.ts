@@ -35,7 +35,11 @@ export function logInfo(scope: string, message: string): void {
 }
 
 export function logError(scope: string, error: unknown): void {
-  console.error(`[studyquest:${scope}]`, scrub(error));
+  const detail =
+    error instanceof Error
+      ? error.stack ?? `${error.name}: ${error.message}`
+      : safeStringify(error);
+  console.error(`[studyquest:${scope}]`, scrub(detail));
 }
 
 export function logWarn(scope: string, message: string): void {
