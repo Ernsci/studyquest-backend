@@ -61,35 +61,30 @@ Copy `.env.example` → `.env`. On Render these are Environment Vars.
 | `PORT` | Set by Render; defaults to `8080`. |
 | `CORS_ORIGINS` | Comma-separated browser origins allowed to call this API (the Vercel URL). |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Verify learner access tokens. |
-| `SUPABASE_SECRET_KEY` | Service-role key; bypasses RLS, server-side only. |
-| `ENABLE_DEMO_MODE` | `true` keeps the bundled sample content available. |
+| `SUPABASE_SECRET_KEY` | Supabase secret key; server-side only and never expose it to the frontend. |
+| `ENABLE_DEMO_MODE` | `true` uses bundled content and in-memory learner state; `false` selects the Supabase store. |
 | `DEMO_PASSWORD` | Optional password required by `POST /api/auth/demo-session`. |
 
 ## Deploying to Render
 
 1. Render → New → Blueprint → pick this repository. `render.yaml` sets the build
-   (`npm ci && npm run build`), start (`npm start`) and health check (`/health`).
+   (`npm ci --include=dev && npm run build`), start (`npm start`) and health check (`/health`).
 2. Fill the variables marked `sync: false` (`CORS_ORIGINS`, the Supabase keys,
    `DEMO_PASSWORD`) and deploy. Copy the public URL.
 3. Set `CORS_ORIGINS` to the Vercel origin(s) of the frontend and redeploy.
    Requests from unlisted origins get no CORS headers (the browser blocks them)
    and are logged as warnings.
 
-## Known limitations (read before connecting Supabase)
+## Connecting Supabase
 
-1. **The Supabase data layer is not written yet.** `src/lib/store/` has one
-   implementation: bundled sample content plus learner state in memory. Both sit
-   behind `StudyQuestStore` in `src/lib/store/types.ts`, so adding
-   `store/supabase-*.ts` and selecting it in `store/index.ts` is the whole
-   change. Until then the API **refuses to start** when Supabase is configured
-   and `ENABLE_DEMO_MODE=false`, so a half-connected deployment can never look
-   healthy.
-2. **Demo state is per-process and in memory.** Restarting the API (or running
-   two instances) resets or splits counters. Demo ids are deterministic
-   (`sub_javascript`, `les_…`, `qs_javascript_1`), so progress re-attaches
-   correctly once a real database exists.
-3. **Demo tokens are not signed.** `demo.<userId>` exists so the split can be
-   exercised without an account system; it is only accepted while Supabase is
-   unconfigured.
-4. **Rate limiting is per instance** (sliding window in memory). Move the buckets
-   to Postgres/Redis when more than one instance runs.
+1. In the Supabase SQL editor, run `supabase/schema.sql`, then `supabase/seed.sql`. The schema includes the transaction RPC used to store attempts, answers, XP, lesson progress, review items, and daily activity.
+2. Set `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SECRET_KEY` on the backend only. Set `ENABLE_DEMO_MODE=false` after applying the schema.
+3. Create or sign up your admin user, then promote that account in the SQL editor:
+
+   ```sql
+   update public.profiles set role = 'admin' where email = 'you@example.com';
+   ```
+
+Never assign admin roles from signup metadata or browser requests.
+
+Demo state remains per-process and in memory; restarting a demo deployment resets learner progress. Demo bearer tokens are accepted only when Supabase is not configured. Rate limiting is also per instance.

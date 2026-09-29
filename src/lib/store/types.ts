@@ -27,7 +27,7 @@ import type {
  * The data layer the API routes talk to.
  *
  * Everything is async on purpose: the bundled sample content answers
- * synchronously, the Supabase implementation will not. Routes therefore never
+ * synchronously, the Supabase implementation does not. Routes therefore never
  * need to change when the backing store is swapped.
  */
 
@@ -128,6 +128,7 @@ export interface LearnerStore {
   recordReview(userId: string, questionId: string, correct: boolean): Promise<SavedQuestion | null>;
 
   createReport(input: {
+    reporterId?: string | null;
     reason: string;
     details: string;
     target: string;
@@ -143,6 +144,7 @@ export interface LearnerStore {
   ): Promise<ContentReport | null>;
 
   createFeedback(input: {
+    authorId?: string | null;
     rating: number;
     message: string;
     authorEmail: string | null;

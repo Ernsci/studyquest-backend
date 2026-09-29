@@ -16,6 +16,7 @@ export const communityRouter = Router();
 communityRouter.post("/reports", rateLimit("reports.create"), async (req, res) => {
   const input = parseInput(reportSchema, req.body);
   const report = await store.createReport({
+    reporterId: req.auth?.userId ?? null,
     reason: input.reason,
     details: input.details,
     target: input.target,
@@ -38,6 +39,7 @@ communityRouter.post("/reports", rateLimit("reports.create"), async (req, res) =
 communityRouter.post("/feedback", rateLimit("feedback.create"), async (req, res) => {
   const input = parseInput(feedbackSchema, req.body);
   const entry = await store.createFeedback({
+    authorId: req.auth?.userId ?? null,
     rating: input.rating,
     message: input.message,
     authorEmail: req.auth?.email ?? input.email ?? null,

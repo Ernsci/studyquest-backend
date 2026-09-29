@@ -61,7 +61,7 @@ export type ProfileRow = {
   created_at: string;
 };
 
-const PROFILE_SELECT =
+export const PROFILE_SELECT =
   "id, email, display_name, username, avatar_url, bio, role, weekly_goal_lessons, reminder_time, " +
   "reminder_enabled, theme_mode, xp, freeze_tokens, email_verified_at, created_at";
 

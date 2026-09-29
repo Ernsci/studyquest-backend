@@ -1,39 +1,46 @@
 import { isDemoModeEnabled, isSupabaseConfigured } from "../../config/env";
 import { logWarn } from "../logger";
+import { supabaseAdmin } from "../supabase/admin";
 import { createDemoContentSource } from "./content-source";
 import { createInMemoryLearnerStore } from "./learner-store";
+import { createSupabaseStore } from "./supabase-store";
 import type { StudyQuestStore } from "./types";
 
 /**
- * Data-layer selection — the single place to change when Supabase is connected.
- *
- * Today the API serves the bundled sample content and keeps learner state in
- * memory, because the Supabase schema has not been created yet. `server.ts`
- * refuses to start when Supabase env vars are present and demo mode is off, so
- * "configured but not implemented" can never be mistaken for working.
+ * Data-layer selection. Demo mode is opt-in when Supabase is configured;
+ * production mode uses the Supabase-backed implementation.
  */
 
 export const DEMO_ACCOUNTS = { learner: "demo-learner", admin: "demo-admin" } as const;
 
 const content = createDemoContentSource();
 const learner = createInMemoryLearnerStore(content);
+const demoStore: StudyQuestStore = { ...content, ...learner };
+let configuredSupabaseStore: StudyQuestStore | null = null;
 
-export const store: StudyQuestStore = { ...content, ...learner };
+function supabaseStore(): StudyQuestStore {
+  configuredSupabaseStore ??= createSupabaseStore();
+  return configuredSupabaseStore;
+}
+
+export const store = new Proxy(demoStore, {
+  get(_target, property) {
+    const selected = isSupabaseConfigured() && !isDemoModeEnabled() ? supabaseStore() : demoStore;
+    const value: unknown = Reflect.get(selected, property, selected);
+    return typeof value === "function" ? value.bind(selected) : value;
+  },
+}) as StudyQuestStore;
 
 export type DataLayerMode = "demo" | "supabase";
 
 export function resolveDataLayer(): DataLayerMode {
   if (!isSupabaseConfigured()) return "demo";
   if (!isDemoModeEnabled()) {
-    throw new Error(
-      "SUPABASE_URL/SUPABASE_ANON_KEY are set but the Supabase data layer is not implemented yet. " +
-        "Set ENABLE_DEMO_MODE=true to keep serving the bundled sample content, or remove the Supabase variables.",
-    );
+    if (!supabaseAdmin()) throw new Error("SUPABASE_SECRET_KEY is required when ENABLE_DEMO_MODE=false.");
+    supabaseStore();
+    return "supabase";
   }
-  logWarn(
-    "store",
-    "Supabase is configured but the Supabase data layer is not implemented yet — content and progress still come from this instance's memory until it lands.",
-  );
+  logWarn("store", "Demo data mode is enabled; learner changes remain in this server's memory.");
   return "demo";
 }
 

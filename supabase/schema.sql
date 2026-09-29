@@ -416,6 +416,163 @@ as $$
    where user_id = p_user and day < p_day - 365;
 $$;
 
+-- Persist a graded attempt and every derived learner update in one transaction.
+-- The API computes grading and XP before calling this service-role-only RPC.
+create or replace function public.record_attempt_bundle(
+  p_attempt jsonb,
+  p_answers jsonb,
+  p_progress jsonb,
+  p_day date,
+  p_lesson_eligible boolean,
+  p_lesson_bonus integer,
+  p_xp integer,
+  p_exercises integer,
+  p_minutes integer,
+  p_freeze_spent integer,
+  p_review_intervals jsonb
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  answer jsonb;
+  review_item jsonb;
+  was_completed boolean := false;
+  did_complete_lesson boolean := false;
+  earned_xp integer;
+begin
+  -- Serialize state changes for one learner so simultaneous attempts cannot
+  -- lose review counts, freeze tokens, or lesson completion XP.
+  perform pg_advisory_xact_lock(hashtextextended(p_attempt ->> 'user_id', 1));
+
+  if p_progress is not null then
+    select coalesce(lp.completed, false) into was_completed
+      from public.lesson_progress lp
+      where lp.user_id = (p_progress ->> 'user_id')::uuid
+        and lp.subject_slug = p_progress ->> 'subject_slug'
+        and lp.lesson_slug = p_progress ->> 'lesson_slug'
+      for update;
+    did_complete_lesson := coalesce(p_lesson_eligible, false) and not coalesce(was_completed, false);
+  end if;
+  earned_xp := greatest(0, coalesce(p_xp, 0)) +
+    case when did_complete_lesson then greatest(0, coalesce(p_lesson_bonus, 0)) else 0 end;
+
+  insert into public.attempts (
+    id, user_id, mode, subject_slug, lesson_slug, score, total, percent,
+    passed, xp_awarded, duration_seconds, answered, correct
+  ) values (
+    (p_attempt ->> 'id')::uuid,
+    (p_attempt ->> 'user_id')::uuid,
+    (p_attempt ->> 'mode')::public.sq_practice_mode,
+    p_attempt ->> 'subject_slug',
+    p_attempt ->> 'lesson_slug',
+    (p_attempt ->> 'score')::integer,
+    (p_attempt ->> 'total')::integer,
+    (p_attempt ->> 'percent')::integer,
+    (p_attempt ->> 'passed')::boolean,
+    earned_xp,
+    nullif(p_attempt ->> 'duration_seconds', '')::integer,
+    (p_attempt ->> 'answered')::integer,
+    (p_attempt ->> 'correct')::integer
+  );
+
+  for answer in select value from jsonb_array_elements(coalesce(p_answers, '[]'::jsonb))
+  loop
+    insert into public.attempt_answers (
+      attempt_id, position, question_id, kind, prompt, given, correct,
+      points_awarded, points_possible, expected, explanation
+    ) values (
+      (p_attempt ->> 'id')::uuid,
+      (answer ->> 'position')::integer,
+      answer ->> 'question_id',
+      (answer ->> 'kind')::public.sq_question_kind,
+      coalesce(answer ->> 'prompt', ''),
+      answer -> 'given',
+      coalesce((answer ->> 'correct')::boolean, false),
+      coalesce((answer ->> 'points_awarded')::integer, 0),
+      coalesce((answer ->> 'points_possible')::integer, 0),
+      answer -> 'expected',
+      coalesce(answer ->> 'explanation', '')
+    );
+
+    if not coalesce((answer ->> 'correct')::boolean, false) then
+      insert into public.review_items (
+        user_id, question_id, subject_slug, review_box, due_on, last_correct,
+        times_seen, mastered, prompt, kind
+      ) values (
+        (p_attempt ->> 'user_id')::uuid,
+        answer ->> 'question_id',
+        coalesce(p_attempt ->> 'subject_slug', ''),
+        0, p_day, false, 1, false,
+        coalesce(answer ->> 'prompt', ''),
+        (answer ->> 'kind')::public.sq_question_kind
+      ) on conflict (user_id, question_id) do update set
+        review_box = 0,
+        due_on = p_day,
+        last_correct = false,
+        times_seen = review_items.times_seen + 1,
+        mastered = false,
+        prompt = excluded.prompt,
+        kind = excluded.kind;
+    elsif (p_attempt ->> 'mode') = 'review' then
+      update public.review_items
+      set review_box = least(review_box + 1, jsonb_array_length(p_review_intervals) - 1),
+          due_on = p_day + ((p_review_intervals ->> least(review_box + 1, jsonb_array_length(p_review_intervals) - 1))::integer),
+          last_correct = true,
+          times_seen = times_seen + 1,
+          mastered = least(review_box + 1, jsonb_array_length(p_review_intervals) - 1) >= jsonb_array_length(p_review_intervals) - 1
+            and times_seen + 1 >= 2
+      where user_id = (p_attempt ->> 'user_id')::uuid
+        and question_id = answer ->> 'question_id';
+    end if;
+  end loop;
+
+  if p_progress is not null then
+    insert into public.lesson_progress (
+      user_id, subject_slug, lesson_slug, attempts, best_percent, completed, completed_at
+    ) values (
+      (p_progress ->> 'user_id')::uuid,
+      p_progress ->> 'subject_slug',
+      p_progress ->> 'lesson_slug',
+      1,
+      nullif(p_progress ->> 'best_percent', '')::integer,
+      did_complete_lesson,
+      case when did_complete_lesson then now() else null end
+    ) on conflict (user_id, subject_slug, lesson_slug) do update set
+      attempts = lesson_progress.attempts + 1,
+      best_percent = greatest(coalesce(lesson_progress.best_percent, 0), excluded.best_percent),
+      completed = lesson_progress.completed or did_complete_lesson,
+      completed_at = coalesce(lesson_progress.completed_at, excluded.completed_at);
+  end if;
+
+  insert into public.daily_activity as activity (
+    user_id, day, lessons_completed, xp_earned, exercises_completed, minutes
+  ) values (
+    (p_attempt ->> 'user_id')::uuid,
+    p_day,
+    case when did_complete_lesson then 1 else 0 end,
+    earned_xp,
+    coalesce(p_exercises, 0),
+    coalesce(p_minutes, 0)
+  ) on conflict (user_id, day) do update set
+    lessons_completed = activity.lessons_completed + excluded.lessons_completed,
+    xp_earned = activity.xp_earned + excluded.xp_earned,
+    exercises_completed = activity.exercises_completed + excluded.exercises_completed,
+    minutes = activity.minutes + excluded.minutes;
+
+  update public.profiles
+  set xp = xp + earned_xp,
+      freeze_tokens = greatest(0, freeze_tokens - greatest(0, coalesce(p_freeze_spent, 0)))
+  where id = (p_attempt ->> 'user_id')::uuid;
+
+  delete from public.daily_activity
+  where user_id = (p_attempt ->> 'user_id')::uuid and day < p_day - 365;
+  return did_complete_lesson;
+end;
+$$;
+
 
 -- ============================================================ row level security
 -- The API talks to Postgres with the service-role key, which bypasses RLS. These
@@ -627,7 +784,9 @@ where n.nspname = 'public' and c.relkind = 'r'
 order by c.relname;
 
 revoke all on function public.record_activity(uuid, date, integer, integer, integer, integer) from public, anon, authenticated;
+revoke all on function public.record_attempt_bundle(jsonb, jsonb, jsonb, date, boolean, integer, integer, integer, integer, integer, jsonb) from public, anon, authenticated;
 grant execute on function public.apply_attempt_xp(uuid, integer, integer) to service_role;
 grant execute on function public.record_activity(uuid, date, integer, integer, integer, integer) to service_role;
+grant execute on function public.record_attempt_bundle(jsonb, jsonb, jsonb, date, boolean, integer, integer, integer, integer, integer, jsonb) to service_role;
 
 
