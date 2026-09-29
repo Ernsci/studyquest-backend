@@ -350,7 +350,7 @@ type ReportRow = {
   created_at: string;
   status: string;
   reason: string;
-  details: string | null;
+  details: string;
   target: string;
   target_href: string | null;
   reporter_email: string | null;
@@ -380,7 +380,7 @@ type FeedbackRow = {
   id: string;
   created_at: string;
   rating: number;
-  message: string | null;
+  message: string;
   author_email: string | null;
 };
 
@@ -400,10 +400,10 @@ type AuditRow = {
   id: string;
   created_at: string;
   action: string;
-  target_type: string | null;
-  target_id: string | null;
+  target_type: string;
+  target_id: string;
   actor_email: string | null;
-  summary: string | null;
+  summary: string;
   ip: string | null;
 };
 
