@@ -10,6 +10,7 @@ import type {
 import { javascriptSubject } from "./content-javascript";
 import { htmlCssSubject, webSecuritySubject } from "./content-web";
 import { pythonSubject, sqlSubject } from "./content-data";
+import { javaSubject } from "./content-java";
 import type { RawSubject } from "./types";
 
 /**
@@ -25,6 +26,7 @@ const raw: RawSubject[] = [
   webSecuritySubject,
   pythonSubject,
   sqlSubject,
+  javaSubject,
 ]
   .slice()
   .sort((a, b) => a.order - b.order);

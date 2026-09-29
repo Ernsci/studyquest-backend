@@ -33,7 +33,7 @@ export const features = {
 export type FeatureFlag = keyof typeof features;
 
 export const subjects = {
-  enabled: ["javascript", "html-css", "python", "sql", "web-security"],
+  enabled: ["javascript", "html-css", "python", "sql", "web-security", "java"],
   pageSize: 12,
 } as const;
 
