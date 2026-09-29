@@ -2,12 +2,7 @@ import type { ZodError } from "zod";
 
 import { fieldErrorsFrom } from "../lib/validation";
 
-/**
- * Every failure leaves the API as this shape:
- *   { error: { code, message, fieldErrors? } }
- * Client code never parses stack traces, and internal messages are only used
- * for 5xx responses (where they are replaced by a generic sentence).
- */
+
 
 export type ErrorCode =
   | "bad_request"
@@ -72,13 +67,7 @@ export const notFound = (message = "That resource does not exist."): ApiError =>
 export const notConfigured = (message: string): ApiError =>
   new ApiError("upstream_error", message);
 
-/**
- * `express.json()` (body-parser/http-errors) signals client mistakes with a
- * numeric `status`: invalid JSON is a 400, an oversized body a 413, an
- * unsupported encoding a 415. Those are the caller's problem, so they must not
- * be reported as a server fault — and the parser's own wording (which leaks
- * offsets and internals) is never echoed back.
- */
+
 export function fromHttpError(error: unknown): ApiError | null {
   if (typeof error !== "object" || error === null) return null;
 

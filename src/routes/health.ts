@@ -5,7 +5,7 @@ import { isDemoAccountModeEnabled, isDemoModeEnabled, isSupabaseConfigured } fro
 
 export const healthRouter = Router();
 
-/** Liveness/readiness probe. Render calls this to decide whether to route to it. */
+
 healthRouter.get("/health", (_req, res) => {
   res.json({
     ok: true,

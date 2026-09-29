@@ -288,10 +288,7 @@ export const webSecuritySubject: RawSubject = {
           language: "sql",
           runnable: false,
           code: src(
-            "// Never assemble SQL from request data:",
-            "// \"SELECT * FROM users WHERE email = '\" + email + \"'\"",
             "",
-            "// Parameterised — the value cannot change the query shape:",
             "SELECT id, email FROM users WHERE email = $1;",
           ),
           explanation:

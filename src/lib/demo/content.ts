@@ -13,12 +13,7 @@ import { pythonSubject, sqlSubject } from "./content-data";
 import { javaSubject } from "./content-java";
 import type { RawSubject } from "./types";
 
-/**
- * Bundled sample content, turned into the same shapes the Supabase data layer
- * returns. Ids are deterministic (`sub_javascript`, `mod_javascript_getting-started`,
- * `les_javascript_values-and-variables`, `qs_javascript_1`) so demo progress rows
- * keep pointing at the same records across restarts.
- */
+
 
 const raw: RawSubject[] = [
   javascriptSubject,

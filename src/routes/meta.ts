@@ -5,11 +5,7 @@ import { isDemoAccountModeEnabled, isDemoModeEnabled } from "../config/env";
 
 export const metaRouter = Router();
 
-/**
- * Public configuration the frontend renders but must not invent: pass marks, XP
- * values, session sizes and which optional features are on. Keeping the numbers
- * here means a scoring change never needs a frontend redeploy.
- */
+
 metaRouter.get("/meta", (_req, res) => {
   res.json({
     site: { name: site.name, shortName: site.shortName, tagline: site.tagline, locale: site.locale },

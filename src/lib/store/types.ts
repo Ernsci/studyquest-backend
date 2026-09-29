@@ -23,13 +23,7 @@ import type {
   SubjectSummary,
 } from "../types";
 
-/**
- * The data layer the API routes talk to.
- *
- * Everything is async on purpose: the bundled sample content answers
- * synchronously, the Supabase implementation does not. Routes therefore never
- * need to change when the backing store is swapped.
- */
+
 
 export type LessonProgressRow = {
   subjectSlug: string;
@@ -47,7 +41,7 @@ export type RecordAttemptInput = {
   subjectSlug: string | null;
   lessonSlug: string | null;
   durationSeconds: number | null;
-  /** Output of `gradeAttempt` — XP is never accepted from the client. */
+
   graded: GradedAttempt;
 };
 
@@ -101,7 +95,7 @@ export interface ContentSource {
   getSubject(subjectSlug: string): Promise<SubjectDetail | null>;
   getLesson(subjectSlug: string, lessonSlug: string): Promise<Lesson | null>;
   listLessons(): Promise<Lesson[]>;
-  /** Prompts + options only; grading fields are stripped before they leave. */
+
   listQuestions(subjectSlug?: string): Promise<QuestionSolution[]>;
   getQuestion(id: string): Promise<QuestionSolution | null>;
   adjacentLesson(subjectSlug: string, lessonSlug: string): Promise<AdjacentLesson>;

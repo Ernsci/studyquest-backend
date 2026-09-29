@@ -10,10 +10,7 @@ import {
 } from "../demo/content";
 import type { ContentSource } from "./types";
 
-/**
- * Content reads backed by the bundled sample lessons. Ids are deterministic, so
- * progress recorded against them survives a restart of this process.
- */
+
 
 export function createDemoContentSource(): ContentSource {
   return {
@@ -57,7 +54,7 @@ export function createDemoContentSource(): ContentSource {
   };
 }
 
-/** Questions belonging to one lesson of the bundled content. */
+
 export function demoLessonQuestions(subjectSlug: string, lessonSlug: string) {
   return lessonDemoQuestions(subjectSlug, lessonSlug);
 }

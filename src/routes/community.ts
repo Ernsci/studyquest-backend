@@ -8,11 +8,7 @@ import { feedbackSchema, reportSchema } from "../lib/validation-api";
 
 export const communityRouter = Router();
 
-/**
- * Content reports work signed out (a visitor may spot a typo before signing up)
- * and are rate limited either way. The caller's email is preferred over anything
- * typed into the form, so a signed-in report is attributable.
- */
+
 communityRouter.post("/reports", rateLimit("reports.create"), async (req, res) => {
   const input = parseInput(reportSchema, req.body);
   const report = await store.createReport({
@@ -47,7 +43,7 @@ communityRouter.post("/feedback", rateLimit("feedback.create"), async (req, res)
   res.status(201).json({ feedback: entry, message: "Feedback received — thank you." });
 });
 
-/** The learner's own reports, so the dashboard can show their status. */
+
 communityRouter.get("/reports/mine", requireAuth(), async (req, res) => {
   const auth = authOf(req);
   const all = await store.listReports(200);

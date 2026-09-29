@@ -13,15 +13,7 @@ import type {
 import { addDays, clamp, percent, todayISO } from "../utils";
 import type { EnsureProfileInput, LessonProgressRow } from "./types";
 
-/**
- * Learner state kept in this process's memory.
- *
- * Honest limits, stated up front: counters reset when the API restarts and a
- * deployment with more than one instance will show different numbers per
- * instance. That is acceptable while the API serves bundled sample content — the
- * shape of every method matches the Supabase implementation that replaces it, so
- * routes, grading and the frontend do not change when the database is connected.
- */
+
 
 export type Store = {
   profiles: Map<string, Profile>;
@@ -101,11 +93,7 @@ export function touchActivity(
 
 export type StreakResult = { current: number; best: number; freezeSpent: number };
 
-/**
- * Streaks from activity days. A single missed day is bridged by spending a
- * freeze token when `learning.streak.allowFreeze` is on — the same rule the
- * dashboard copy promises.
- */
+
 export function computeStreaks(
   days: string[],
   today: string,
@@ -118,7 +106,7 @@ export function computeStreaks(
   let cursor = today;
   let tokens = clamp(freezeTokens, 0, 99);
   if (!set.has(today)) {
-    // A streak survives until the end of the day after the last activity.
+
     cursor = addDays(today, -1);
   }
   while (true) {

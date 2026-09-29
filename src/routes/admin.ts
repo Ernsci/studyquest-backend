@@ -10,10 +10,10 @@ import { store } from "../lib/store";
 
 export const adminRouter = Router();
 
-/** Mounted at `/api/admin`, so this applies to admin routes only. */
+
 adminRouter.use(requireAdmin());
 
-/** Everything the admin dashboard needs in one round trip. */
+
 adminRouter.get("/overview", async (_req, res) => {
   const [overview, reports, feedback, audit] = await Promise.all([
     store.adminOverview(),
@@ -28,7 +28,7 @@ adminRouter.get("/users", async (_req, res) => {
   res.json({ users: await store.adminUsers() });
 });
 
-/** Includes solutions, which is exactly why the role check comes first. */
+
 adminRouter.get("/content", async (_req, res) => {
   const [subjects, lessons, questions] = await Promise.all([
     store.adminSubjects(),

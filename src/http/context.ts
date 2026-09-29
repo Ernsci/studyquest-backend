@@ -6,16 +6,7 @@ import { verifyAccessToken } from "../lib/supabase/admin";
 import type { Profile, Role } from "../lib/types";
 import { forbidden, unauthorized } from "./errors";
 
-/**
- * Request authentication.
- *
- * Two kinds of bearer token are accepted:
- *  - a Supabase access token (the normal path): verified with Supabase, so the
- *    identity is signed by the auth server, never asserted by the browser;
- *  - `demo.<userId>` while Supabase is not configured, so the split frontend can
- *    be tried out end to end. Those tokens stop working the moment Supabase env
- *    vars are present.
- */
+
 
 export type AuthContext = {
   userId: string;
@@ -26,7 +17,7 @@ export type AuthContext = {
 };
 
 declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
+
   namespace Express {
     interface Request {
       auth?: AuthContext;
@@ -94,7 +85,7 @@ export function requireAdmin(): RequestHandler {
   };
 }
 
-/** Use inside a handler that already passed `requireAuth()`. */
+
 export function authOf(req: Request): AuthContext {
   if (!req.auth) throw unauthorized();
   return req.auth;

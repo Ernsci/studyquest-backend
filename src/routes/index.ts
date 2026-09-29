@@ -8,11 +8,7 @@ import { learnerRouter } from "./learner";
 import { metaRouter } from "./meta";
 import { practiceRouter } from "./practice";
 
-/**
- * `/api/*` is served by these routers. `attachAuth` runs once here: it resolves
- * the bearer token into `req.auth`, which the routers then read. Requests stay
- * exactly as public as each handler decides.
- */
+
 export const apiRouter = Router();
 
 apiRouter.use(attachAuth);

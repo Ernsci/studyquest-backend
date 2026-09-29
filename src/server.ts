@@ -3,10 +3,7 @@ import { env, isSupabaseConfigured } from "./config/env";
 import { logError, logInfo, logWarn } from "./lib/logger";
 import { resolveDataLayer, seedDemoAccounts } from "./lib/store";
 
-/**
- * Entry point. Fails fast (non-zero exit) on a misconfigured environment —
- * a Render deploy that cannot serve correct data should never look healthy.
- */
+
 async function main(): Promise<void> {
   const mode = resolveDataLayer();
 

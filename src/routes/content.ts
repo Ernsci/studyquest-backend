@@ -80,7 +80,7 @@ contentRouter.get("/subjects/:slug/lessons/:lessonSlug", async (req, res) => {
   });
 });
 
-/** Assembled practice session: shuffled selection, never shuffled option order. */
+
 contentRouter.get("/subjects/:slug/practice", async (req, res) => {
   const slug = req.params.slug ?? "";
   const subject = await store.getSubject(slug);
@@ -101,15 +101,11 @@ contentRouter.get("/subjects/:slug/practice", async (req, res) => {
   });
 });
 
-/* --------------------------------------------------------------- demo session */
+
 
 const demoSessionSchema = demoLoginSchema.extend({ password: z.string().max(72).optional() });
 
-/**
- * Issues a demo bearer token. Only available while Supabase is not configured:
- * connecting the database removes this route's usefulness entirely, so a
- * production deployment cannot fall back to it by accident.
- */
+
 authRouter.post("/auth/demo-session", rateLimit("auth.demoSession"), async (req, res) => {
   if (!isDemoAccountModeEnabled()) {
     throw notFound("Demo accounts are disabled.");
@@ -133,7 +129,7 @@ authRouter.post("/auth/demo-session", rateLimit("auth.demoSession"), async (req,
   });
 });
 
-/** Convenience for the frontend's "signed-in" check with a Supabase token. */
+
 authRouter.get("/auth/session", (req, res) => {
   if (!req.auth) {
     res.json({ signedIn: false, profile: null });

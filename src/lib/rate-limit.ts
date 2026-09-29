@@ -1,19 +1,7 @@
 import { limits } from "../config/app-config";
 import { logWarn } from "./logger";
 
-/**
- * Rate limiting for server actions.
- *
- * Implementation: sliding-window counters held in a per-instance Map. That is
- * enough to stop one browser hammering practice submission or the report form,
- * and it needs no extra infrastructure. Two honest caveats:
- *  - State is per Node process, so a multi-instance deployment gets a relaxed
- *    limit. Move the same buckets to Postgres/Redis if you need strictness.
- *  - `x-forwarded-for` is only trustworthy behind your own proxy; when the app
- *    is exposed directly, anonymous fallback keys are advisory only.
- *
- * When a Supabase session exists we key on the user id, which cannot be forged.
- */
+
 
 type Bucket = keyof typeof limits.rateLimits;
 type Window = { hits: number[] };
@@ -67,13 +55,13 @@ export function checkRateLimit(bucket: Bucket, actorKey: string): RateDecision {
   return { ok: true, remaining: rule.max - entry.hits.length, retryAfterSeconds: 0 };
 }
 
-/** Build the key used for a request: stable user id, else best-effort IP. */
+
 export function rateKey(userId: string | null, ip: string | null): string {
   if (userId) return `u:${userId}`;
   return `ip:${ip && ip.length > 0 ? ip : "unknown"}`;
 }
 
-/** First hop of `x-forwarded-for`, falling back to the socket address. */
+
 export function clientIp(forwardedFor: string | undefined, remote: string | undefined): string {
   const first = forwardedFor?.split(",")[0]?.trim();
   return first && first.length > 0 ? first : (remote ?? "unknown");

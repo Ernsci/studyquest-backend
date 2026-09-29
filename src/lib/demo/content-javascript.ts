@@ -78,7 +78,6 @@ export const javascriptSubject: RawSubject = {
             "  console.log(label);",
             "}",
             "",
-            "// i and label do not exist out here: they were block scoped.",
           ),
         },
       ],
@@ -260,7 +259,6 @@ export const javascriptSubject: RawSubject = {
         "const total = done + skipped;",
         "",
         "console.log(total);",
-        "// Make this line print: Answered 8 questions",
         "console.log(\"Answered \" + \"x\" + \" questions\");",
       ),
       explanation:

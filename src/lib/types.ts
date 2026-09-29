@@ -1,8 +1,4 @@
-/**
- * Shared domain types. Both the Supabase data layer and the in-memory demo
- * layer return these shapes, so UI code never has to know which one is active.
- * Supabase `snake_case` rows are mapped to camelCase here.
- */
+
 
 export type Role = "learner" | "admin";
 
@@ -17,7 +13,7 @@ export type QuestionKind =
 
 export type PracticeMode = "quiz" | "practice" | "review" | "lesson";
 
-/** A learner's answer. Shape depends on `QuestionKind`. */
+
 export type StudentAnswer = string | number | number[] | boolean | null;
 
 export type Profile = {
@@ -72,7 +68,7 @@ export type ModuleWithLessons = {
 
 export type SubjectDetail = SubjectSummary & {
   modules: ModuleWithLessons[];
-  /** Flattened, ordered list of every lesson in the subject. */
+
   lessonIndex: Array<{ slug: string; title: string; moduleTitle: string }>;
 };
 
@@ -106,7 +102,7 @@ export type Lesson = {
   slug: string;
   title: string;
   description: string;
-  /** Markdown-lite body rendered by components/markdown.tsx (no HTML injection). */
+
   body: string;
   objectives: string[];
   codeExamples: CodeExample[];
@@ -118,7 +114,7 @@ export type Lesson = {
   published: boolean;
 };
 
-/** Question as sent to a learner: prompt + options, never the solution. */
+
 export type Question = {
   id: string;
   subjectSlug: string;
@@ -132,7 +128,7 @@ export type Question = {
   difficulty: Difficulty;
 };
 
-/** Solution fields. Admin-only in the DB; used server-side to grade. */
+
 export type QuestionSolution = Question & {
   answer: StudentAnswer;
   explanation: string;
@@ -292,7 +288,7 @@ export type AuditEntry = {
   ip: string | null;
 };
 
-/** Admin-facing rows (include unpublished content). */
+
 export type AdminSubjectRow = SubjectSummary & { updatedAt: string };
 
 export type AdminLessonRow = {
@@ -321,7 +317,7 @@ export type AdminUserRow = {
   emailVerifiedAt: string | null;
 };
 
-/** Every server action returns this — no thrown errors reach the UI. */
+
 export type ActionResult<T = null> =
   | { ok: true; data: T; message?: string }
   | { ok: false; error: string; fieldErrors?: Record<string, string[]> };

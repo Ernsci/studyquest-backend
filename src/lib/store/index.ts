@@ -6,10 +6,7 @@ import { createInMemoryLearnerStore } from "./learner-store";
 import { createSupabaseStore } from "./supabase-store";
 import type { StudyQuestStore } from "./types";
 
-/**
- * Data-layer selection. Demo mode is opt-in when Supabase is configured;
- * production mode uses the Supabase-backed implementation.
- */
+
 
 export const DEMO_ACCOUNTS = { learner: "demo-learner", admin: "demo-admin" } as const;
 
@@ -44,7 +41,7 @@ export function resolveDataLayer(): DataLayerMode {
   return "demo";
 }
 
-/** Creates the two demo identities so the frontend can be exercised end to end. */
+
 export async function seedDemoAccounts(): Promise<void> {
   await learner.ensureProfile({
     id: DEMO_ACCOUNTS.learner,

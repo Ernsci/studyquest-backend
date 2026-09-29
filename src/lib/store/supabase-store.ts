@@ -280,8 +280,8 @@ export function createSupabaseStore(): StudyQuestStore {
     async ensureProfile(input: EnsureProfileInput) {
       const existing = await this.getProfile(input.id);
       if (existing) return existing;
-      // Signup trigger creates the canonical row and grants roles. This insert
-      // is a safe fallback; deliberately never trusts input.role.
+
+
       const email = input.email ?? "";
       const displayName = input.displayName?.trim() || email.split("@")[0] || "Learner";
       const inserted = await db.from("profiles").upsert(

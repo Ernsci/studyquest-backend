@@ -1,13 +1,6 @@
 import type { CodeExample, DiagramBlock, Difficulty, RelatedLink } from "../types";
 
-/**
- * Content-authoring shapes used by the bundled sample content
- * (`src/lib/demo/content*.ts`). `src/lib/demo/content.ts` turns these into the
- * real `Subject` / `Lesson` / `QuestionSolution` records with generated ids.
- *
- * The same text is written into `supabase/seed/sample-content.sql`, so the demo
- * experience and a freshly migrated Supabase project look identical.
- */
+
 
 export type RawCodeExample = CodeExample;
 export type RawDiagram = DiagramBlock;
@@ -39,7 +32,7 @@ export type RawQuestion = {
   kind: "single" | "multiple" | "true_false" | "short_answer" | "code";
   prompt: string;
   options?: string[];
-  /** Option index, index array, boolean, accepted text ("a|b") or literal. */
+
   answer: number | number[] | boolean | string;
   explanation: string;
   hint?: string;
@@ -63,12 +56,12 @@ export type RawSubject = {
   questions: RawQuestion[];
 };
 
-/** Join authoring lines into a markdown-lite lesson body. */
+
 export function body(...lines: string[]): string {
   return lines.join("\n");
 }
 
-/** Join authoring lines into a code snippet. */
+
 export function src(...lines: string[]): string {
   return lines.join("\n");
 }

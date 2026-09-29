@@ -1,6 +1,6 @@
 import { learning } from "../config/app-config";
 
-/** Tiny class-name joiner (avoids a clsx dependency). */
+
 export function cn(...values: Array<string | false | null | undefined>): string {
   return values.filter(Boolean).join(" ");
 }
@@ -30,8 +30,8 @@ export function initials(name: string): string {
   return letters.length > 0 ? letters.toUpperCase() : "?";
 }
 
-/* ------------------------------------------------------------------ dates */
-/** Local-time YYYY-MM-DD (Supabase `date` columns are timezone-free). */
+
+
 export function toISODate(value: Date = new Date()): string {
   const y = value.getFullYear();
   const m = `${value.getMonth() + 1}`.padStart(2, "0");
@@ -101,8 +101,8 @@ export function formatDuration(seconds: number | null | undefined): string {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
-/* -------------------------------------------------------------------- xp */
-/** XP needed to reach a level grows linearly: level n needs 100·n·(n-1)/2. */
+
+
 export function levelFromXp(xp: number): number {
   return Math.max(1, Math.floor((1 + Math.sqrt(1 + (8 * Math.max(0, xp)) / 100)) / 2));
 }
@@ -122,13 +122,13 @@ export function nextLevelXp(xp: number): number {
   return xpForLevel(levelFromXp(xp) + 1);
 }
 
-/* ----------------------------------------------------------------- misc */
+
 export function truncate(value: string, max = 120): string {
   const clean = value.replace(/\s+/g, " ").trim();
   return clean.length > max ? `${clean.slice(0, max - 1).trimEnd()}…` : clean;
 }
 
-/** Deterministic pick used for stable quiz assembly on the server. */
+
 export function seededShuffle<T>(items: T[], seed: number): T[] {
   const copy = [...items];
   let state = seed % 2147483647;
@@ -149,7 +149,7 @@ export function goalMinutes(): number {
   return learning.dailyGoalMinutes;
 }
 
-/** Escape user text before putting it in an aria-label or plain-text context. */
+
 export function plainText(value: string): string {
   return value.replace(/[<>]/g, "");
 }

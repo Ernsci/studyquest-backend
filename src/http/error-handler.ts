@@ -10,15 +10,7 @@ export const notFoundHandler: RequestHandler = (req, res) => {
   });
 };
 
-/**
- * Terminal error handler. Known failures keep their status and message; anything
- * unexpected is logged with context (operation + path) and answered with a short
- * sentence, so internal details never reach a response body in production.
- *
- * `fromHttpError` steps in for parser-level failures (malformed or oversized
- * bodies) that arrive as plain `http-errors` — a bad request from the caller
- * must never be reported as a server fault.
- */
+
 export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
   const apiError = error instanceof ApiError ? error : fromHttpError(error);
 

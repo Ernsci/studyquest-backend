@@ -11,14 +11,7 @@ import { submitAttemptSchema } from "../lib/validation";
 
 export const practiceRouter = Router();
 
-/**
- * Grades a submitted session.
- *
- * The client sends question ids and answers only. Correctness, points and XP are
- * computed here from the stored key (`lib/grade.ts`), and every question is
- * checked to belong to the subject/lesson it claims, so one session cannot mix
- * content to inflate a score.
- */
+
 practiceRouter.post("/practice/submit", requireAuth(), rateLimit("practice.submit"), async (req, res) => {
   const auth = authOf(req);
   const input = parseInput(submitAttemptSchema, req.body);

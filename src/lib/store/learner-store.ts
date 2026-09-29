@@ -194,11 +194,7 @@ export function createInMemoryLearnerStore(content: ContentSource): LearnerStore
     };
   }
 
-  /**
-   * Persists a graded attempt: XP, activity, lesson completion and the review
-   * queue. XP is taken from `input.graded` (computed by `lib/grade.ts` on the
-   * server) and never from the request body.
-   */
+
   async function recordAttempt(input: RecordAttemptInput): Promise<RecordAttemptOutcome> {
     const profile = readProfile(input.userId);
     const createdAt = new Date().toISOString();
@@ -592,7 +588,7 @@ export function createInMemoryLearnerStore(content: ContentSource): LearnerStore
   };
 }
 
-/** Keeps audit rows readable without pulling a formatter into this module. */
+
 function truncateSummary(value: string): string {
   const clean = value.replace(/\s+/g, " ").trim();
   return clean.length > 160 ? `${clean.slice(0, 159)}…` : clean;

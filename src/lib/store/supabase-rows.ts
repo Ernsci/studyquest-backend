@@ -21,23 +21,17 @@ import type {
 } from "../types";
 import type { LessonProgressRow } from "./types";
 
-/**
- * Row shapes and mappers for the Postgres schema in `supabase/schema.sql`.
- *
- * Supabase returns `snake_case`; every row crosses into the app through one of
- * the mappers here as the camelCase type in `lib/types.ts`, so routes and UI
- * never see a database column name.
- */
+
 
 export type Client = SupabaseClient;
 
-/** Postgres/RLS problems are an upstream fault, never a client error. */
+
 export function fail(scope: string, operation: string, cause: unknown): never {
   logError(scope, `${operation} failed — ${describeError(cause)}`);
   throw new ApiError("upstream_error", `${operation} failed. Check the Supabase schema.`, { cause });
 }
 
-/** Awaiting the builder gives `{ data, error }`; this unwraps or throws. */
+
 export function unwrap<T>(scope: string, operation: string, result: { data: T | null; error: unknown }): T {
   if (result.error) fail(scope, operation, result.error);
   return result.data as T;

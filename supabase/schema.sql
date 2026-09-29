@@ -1,27 +1,27 @@
--- =============================================================================
--- StudyQuest — Supabase / Postgres schema
--- =============================================================================
--- How to run: Supabase dashboard → SQL Editor → New query → paste → Run.
--- Run `seed.sql` afterwards if you want the bundled sample content in the DB.
--- Re-running this file is safe: everything is `if not exists` / `or replace`.
---
--- Conventions
---  * snake_case columns; the API maps them to the camelCase types in
---    `src/lib/types.ts`. No other code reads these tables.
---  * Content ids are `text`, not uuid, and keep the deterministic ids the demo
---    layer uses (`sub_javascript`, `les_javascript_values-and-variables`,
---    `qs_javascript_1`). Progress rows recorded against demo content therefore
---    stay valid after the database is connected.
---  * Learner-facing ids (`profiles.id`, `attempts.id`, …) are `uuid`;
---    `profiles.id` is a foreign key to `auth.users(id)` and cascades on delete.
---  * `question_solutions` is split out of `questions` on purpose: it has RLS
---    enabled and *no* policies, so the anon key can never read an answer key
---    even if a future query is accidentally built with a user token.
--- =============================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 create extension if not exists pgcrypto with schema extensions;
 
--- ---------------------------------------------------------------------- enums
+
 do $$ begin
   create type public.sq_role as enum ('learner', 'admin');
 exception when duplicate_object then null; end $$;
@@ -47,7 +47,7 @@ do $$ begin
   create type public.sq_report_status as enum ('open', 'in_review', 'resolved', 'dismissed');
 exception when duplicate_object then null; end $$;
 
--- -------------------------------------------------------------------- helpers
+
 create or replace function public.touch_updated_at()
 returns trigger
 language plpgsql
@@ -58,8 +58,8 @@ begin
 end;
 $$;
 
--- Emails listed here get the admin role automatically at signup. Set with:
---   alter database postgres set app.admin_emails = 'you@example.com,ana@example.com';
+
+
 create or replace function public.is_admin_email(email text)
 returns boolean
 language sql
@@ -72,7 +72,7 @@ as $$
   );
 $$;
 
--- ==================================================================== content
+
 create table if not exists public.subjects (
   id           text primary key,
   slug         text not null unique,
@@ -135,8 +135,8 @@ create table if not exists public.questions (
   updated_at   timestamptz not null default now()
 );
 
--- Answer keys. RLS is on with no policies: readable through the service-role
--- key (the API) and by nobody else, so a prompt-only query can never leak them.
+
+
 create table if not exists public.question_solutions (
   question_id     text primary key references public.questions (id) on delete cascade,
   answer          jsonb not null,
@@ -153,7 +153,7 @@ create index if not exists questions_subject_idx on public.questions (subject_id
 create index if not exists questions_lesson_idx  on public.questions (lesson_id);
 
 
--- ==================================================================== learner
+
 create table if not exists public.profiles (
   id                  uuid primary key references auth.users (id) on delete cascade,
   email               text not null default '',
@@ -202,8 +202,8 @@ create table if not exists public.attempts (
   created_at       timestamptz not null default now()
 );
 
--- A frozen copy of what was asked and what the key said, so an attempt still
--- reads correctly after an admin edits or deletes the question.
+
+
 create table if not exists public.attempt_answers (
   id              uuid primary key default extensions.gen_random_uuid(),
   attempt_id      uuid not null references public.attempts (id) on delete cascade,
@@ -255,7 +255,7 @@ create table if not exists public.review_items (
 );
 
 
--- =============================================================== community/admin
+
 create table if not exists public.content_reports (
   id            uuid primary key default extensions.gen_random_uuid(),
   created_at    timestamptz not null default now(),
@@ -301,9 +301,9 @@ create index if not exists feedback_created_idx    on public.feedback (created_a
 create index if not exists audit_created_idx       on public.audit_log (created_at desc);
 create index if not exists profiles_xp_idx         on public.profiles (xp desc);
 
--- ================================================================== functions
--- True when the caller (browser token) is an admin. `security definer` so the
--- policy below can read `profiles.role` without recursing into its own policy.
+
+
+
 create or replace function public.is_admin()
 returns boolean
 language sql
@@ -317,8 +317,8 @@ as $$
   );
 $$;
 
--- Signup hook: every auth.users row gets a profile row. Copies the display name
--- from the signup metadata and grants admin when the email is allow-listed.
+
+
 create or replace function public.handle_new_user()
 returns trigger
 language plpgsql
@@ -352,8 +352,8 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
 
--- A browser-issued write may change preferences, never the server-owned columns.
--- The service-role key has no `auth.uid()`, so the API is unaffected.
+
+
 create or replace function public.guard_profile_columns()
 returns trigger
 language plpgsql
@@ -372,8 +372,8 @@ begin
 end;
 $$;
 
--- Adds XP and spends streak-freeze tokens in one statement, so two attempts
--- finishing at the same moment cannot overwrite each other's totals.
+
+
 create or replace function public.apply_attempt_xp(p_user uuid, p_xp integer, p_freeze_spent integer)
 returns public.profiles
 language sql
@@ -387,8 +387,8 @@ as $$
   returning p.*;
 $$;
 
--- One upsert per practice session instead of a read-modify-write round trip.
--- Rows older than the heatmap window are pruned so the table stays small.
+
+
 create or replace function public.record_activity(
   p_user       uuid,
   p_day        date,
@@ -416,8 +416,8 @@ as $$
    where user_id = p_user and day < p_day - 365;
 $$;
 
--- Persist a graded attempt and every derived learner update in one transaction.
--- The API computes grading and XP before calling this service-role-only RPC.
+
+
 create or replace function public.record_attempt_bundle(
   p_attempt jsonb,
   p_answers jsonb,
@@ -443,8 +443,8 @@ declare
   did_complete_lesson boolean := false;
   earned_xp integer;
 begin
-  -- Serialize state changes for one learner so simultaneous attempts cannot
-  -- lose review counts, freeze tokens, or lesson completion XP.
+
+
   perform pg_advisory_xact_lock(hashtextextended(p_attempt ->> 'user_id', 1));
 
   if p_progress is not null then
@@ -574,10 +574,10 @@ end;
 $$;
 
 
--- ============================================================ row level security
--- The API talks to Postgres with the service-role key, which bypasses RLS. These
--- policies exist for everything else: the anon key, the SQL editor's `anon`
--- preview, and any future query built with a learner's own token.
+
+
+
+
 alter table public.subjects          enable row level security;
 alter table public.modules           enable row level security;
 alter table public.lessons           enable row level security;
@@ -594,7 +594,7 @@ alter table public.content_reports   enable row level security;
 alter table public.feedback          enable row level security;
 alter table public.audit_log         enable row level security;
 
--- Published content is world-readable; unpublished rows need an admin.
+
 drop policy if exists subjects_read on public.subjects;
 create policy subjects_read on public.subjects
   for select to anon, authenticated
@@ -621,9 +621,9 @@ create policy questions_read on public.questions
   for select to anon, authenticated
   using (published or public.is_admin());
 
--- Deliberately no policy: answer keys are service-role only.
 
--- Own profile, or any profile when you are an admin.
+
+
 drop policy if exists profiles_read on public.profiles;
 create policy profiles_read on public.profiles
   for select to authenticated
@@ -637,7 +637,7 @@ create policy profiles_update on public.profiles
 
 revoke all on function public.apply_attempt_xp(uuid, integer, integer) from public, anon, authenticated;
 
--- Learner-owned rows: you see and change your own, admins may read everything.
+
 drop policy if exists lesson_progress_owner on public.lesson_progress;
 create policy lesson_progress_owner on public.lesson_progress
   for all to authenticated
@@ -685,8 +685,8 @@ create policy review_items_owner on public.review_items
   using (user_id = (select auth.uid()) or public.is_admin())
   with check (user_id = (select auth.uid()));
 
--- Reports and feedback: anyone (including signed-out visitors, through the
--- feedback form) may file one; only the author or an admin may read it back.
+
+
 drop policy if exists reports_insert on public.content_reports;
 create policy reports_insert on public.content_reports
   for insert to authenticated, anon
@@ -718,7 +718,7 @@ create policy feedback_admin_delete on public.feedback
   for delete to authenticated
   using (public.is_admin());
 
--- The audit trail is admin-read and service-role-write.
+
 drop policy if exists audit_admin_read on public.audit_log;
 create policy audit_admin_read on public.audit_log
   for select to authenticated
@@ -726,7 +726,7 @@ create policy audit_admin_read on public.audit_log
 
 drop policy if exists audit_admin_delete on public.audit_log;
 
--- =========================================================== triggers & grants
+
 drop trigger if exists subjects_touch on public.subjects;
 create trigger subjects_touch before update on public.subjects
   for each row execute function public.touch_updated_at();
@@ -773,10 +773,10 @@ grant select on public.audit_log to authenticated;
 revoke insert, update, delete on public.attempts, public.attempt_answers from anon, authenticated;
 revoke insert, update, delete on public.audit_log from anon, authenticated;
 
--- Belt and braces next to the missing policies above.
+
 revoke all on public.question_solutions from anon, authenticated, public;
 
--- Sanity check: 15 tables, all with RLS on, and no policy on question_solutions.
+
 select c.relname as table_name, c.relrowsecurity as rls_enabled
 from pg_class c
 join pg_namespace n on n.oid = c.relnamespace

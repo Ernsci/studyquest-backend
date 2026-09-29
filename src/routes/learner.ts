@@ -12,11 +12,7 @@ import { bookmarkSchema } from "../lib/validation-api";
 
 export const learnerRouter = Router();
 
-/**
- * Auth is attached per path group rather than to the whole router: a pathless
- * `router.use(requireAuth())` would also run for sibling routers mounted on the
- * same `/api` prefix (for example the demo-session route).
- */
+
 learnerRouter.use(["/me", "/progress", "/attempts", "/bookmarks", "/review", "/plan"], requireAuth());
 
 learnerRouter.get("/me", async (req, res) => {
@@ -28,10 +24,7 @@ learnerRouter.get("/me", async (req, res) => {
   res.json({ profile: profile ?? auth.profile, stats, demo: auth.demo });
 });
 
-/**
- * Expects the complete profile form (as the settings screen submits it), not a
- * sparse PATCH document — that keeps one validation path for every field.
- */
+
 learnerRouter.patch("/me", rateLimit("profile.update"), async (req, res) => {
   const auth = authOf(req);
   const input = parseInput(profileSchema, req.body);
@@ -100,7 +93,7 @@ learnerRouter.get("/bookmarks", async (req, res) => {
   res.json({ bookmarks: await store.listBookmarks(auth.userId) });
 });
 
-/** Toggles the bookmark and answers with the resulting state. */
+
 learnerRouter.post("/bookmarks", async (req, res) => {
   const auth = authOf(req);
   const input = parseInput(bookmarkSchema, req.body);

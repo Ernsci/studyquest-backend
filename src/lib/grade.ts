@@ -6,22 +6,9 @@ import type {
   StudentAnswer,
 } from "./types";
 
-/**
- * Grading rules — the single source of truth for "is this answer right?".
- *
- * Grading always happens on the server (or inside the Postgres function that
- * Supabase uses in demo-off mode). The browser only ever receives prompts and
- * options, never `answer` / `explanation`, so a curious learner cannot read the
- * key out of a network response.
- *
- * Documented limitation: `code` questions are graded by comparing the text the
- * learner's own sandboxed runner printed with `expected_output`. Because the
- * JavaScript runs in the learner's browser, a determined learner could forge
- * that text. Everything else (option indexes, ordering, short answers) is
- * graded from data the server holds, and XP is always recomputed here.
- */
 
-/** Lowercase, trim, collapse whitespace, drop trailing punctuation. */
+
+
 export function normalizeText(value: string): string {
   return value
     .toLowerCase()
@@ -30,7 +17,7 @@ export function normalizeText(value: string): string {
     .trim();
 }
 
-/** Normalize code output: per-line trim, ignore blank lines and trailing slash. */
+
 export function normalizeOutput(value: string): string {
   return value
     .split(/\r?\n/)
@@ -40,7 +27,7 @@ export function normalizeOutput(value: string): string {
     .toLowerCase();
 }
 
-/** Short answers accept alternatives separated by `|` in the stored answer. */
+
 export function acceptedShortAnswers(answer: StudentAnswer): string[] {
   if (typeof answer !== "string") return [];
   return answer
@@ -103,7 +90,7 @@ export type GradedAttempt = {
   answers: GradedAnswer[];
 };
 
-/** Grade a whole attempt. XP is derived here and never accepted from the client. */
+
 export function gradeAttempt(params: {
   questions: QuestionSolution[];
   responses: Map<string, StudentAnswer>;
@@ -139,7 +126,7 @@ export function gradeAttempt(params: {
   return { score, total, percent, passed, xpAwarded, answers };
 }
 
-/** Human-readable rendering of the stored key, shown only after grading. */
+
 export function describeExpected(question: QuestionSolution): string {
   switch (question.kind) {
     case "single": {

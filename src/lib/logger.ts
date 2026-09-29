@@ -1,15 +1,7 @@
-/**
- * Minimal logging helpers.
- *
- * Rules enforced here:
- *  - Never log tokens, cookies, keys, passwords, or full rows of personal data.
- *  - Supabase/Postgres error text is logged verbatim *after* scrubbing anything
- *    that looks like a JWT or key, because those messages are what you need
- *    when an RLS policy silently returns zero rows.
- */
+
 
 const SECRET_PATTERNS = [
-  /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}/g, // JWTs
+  /eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{5,}\.[A-Za-z0-9_-]{5,}/g,
   /\b(sb_|eyJ|eyJhbGciOi|service_role|secret)[A-Za-z0-9_\-]{6,}/gi,
   /("?(apikey|api_key|password|token|authorization|secret)"?\s*[:=]\s*)"?[^"\s,}]+/gi,
 ];
@@ -46,7 +38,7 @@ export function logWarn(scope: string, message: string): void {
   console.warn(`[studyquest:${scope}]`, scrub(message));
 }
 
-/** Turn an unknown thrown value into a short, safe, human-readable message. */
+
 export function describeError(error: unknown, fallback = "Something went wrong."): string {
   if (!error) return fallback;
   if (typeof error === "string") return scrub(error) || fallback;

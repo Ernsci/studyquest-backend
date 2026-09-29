@@ -3,7 +3,7 @@ import { z } from "zod";
 import { limits } from "../config/app-config";
 import { emailSchema, slugSchema } from "./validation";
 
-/** Request schemas for learner-facing endpoints (reports, feedback, bookmarks). */
+
 
 export const bookmarkSchema = z.object({
   subjectSlug: slugSchema,

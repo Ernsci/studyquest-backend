@@ -2,12 +2,7 @@ import { z } from "zod";
 
 import { limits, practice } from "../config/app-config";
 
-/**
- * Input validation for every server action. These schemas are the contract:
- * anything that reaches the database has passed through them first. Length caps
- * come from `config/app-config.ts -> limits.input` so the config file and the
- * validation layer cannot drift apart.
- */
+
 
 const { input } = limits;
 
@@ -18,10 +13,7 @@ export const slugSchema = z
   .max(input.slugMax, `Use at most ${input.slugMax} characters.`)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Use lowercase letters, numbers and hyphens.");
 
-/**
- * Record ids. Supabase uses UUIDs; bundled demo content uses stable ids such as
- * `qs_javascript_1`, so both shapes are accepted.
- */
+
 export const idSchema = z
   .string()
   .trim()
@@ -56,7 +48,7 @@ export const timeSchema = z
 
 export const themeModeSchema = z.enum(["light", "dark", "system"]);
 
-/* ------------------------------------------------------------------- auth */
+
 export const loginSchema = z.object({
   email: emailSchema,
   password: z.string().min(1, "Enter your password.").max(72),
@@ -89,7 +81,7 @@ export const demoLoginSchema = z.object({
   account: z.enum(["demo-learner", "demo-admin"]),
 });
 
-/* ---------------------------------------------------------------- profile */
+
 export const profileSchema = z.object({
   displayName: displayNameSchema,
   username: z.preprocess(
@@ -122,7 +114,7 @@ export const deleteAccountSchema = z.object({
     .refine((value) => value === "DELETE MY DATA", "Type DELETE MY DATA exactly."),
 });
 
-/* --------------------------------------------------------------- practice */
+
 export const studentAnswerSchema = z.union([
   z.string().max(input.codeMax),
   z.number().int().min(-1).max(50),
@@ -171,7 +163,7 @@ export const savedQuestionSchema = z.object({
   save: z.coerce.boolean(),
 });
 
-/** Helper: turn a ZodError into per-field messages for forms. */
+
 export function fieldErrorsFrom(error: z.ZodError): Record<string, string[]> {
   const out: Record<string, string[]> = {};
   for (const issue of error.issues) {

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { limits } from "../config/app-config";
 import { slugSchema, uuidSchema } from "./validation";
 
-/** Validation for admin-only mutations (kept separate from learner schemas). */
+
 
 const { input } = limits;
 
@@ -80,7 +80,7 @@ export const adminLessonSchema = z
     }
   });
 
-/** Options/answer combinations that must agree with the chosen question kind. */
+
 export const adminQuestionSchema = z
   .object({
     id: z.string().optional().or(z.literal("")),
@@ -166,7 +166,7 @@ export const adminDeleteSchema = z.object({
   targetId: uuidSchema,
 });
 
-/** Parse helper every admin action uses, so error shaping stays identical. */
+
 export function parse<T>(
   schema: z.ZodType<T>,
   payload: unknown,
