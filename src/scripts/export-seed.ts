@@ -31,7 +31,7 @@ function text(value: string | null | undefined): string {
     // Extremely unlikely, but a collision would corrupt the statement.
     return `'${value.replace(/'/g, "''").replace(/\$/g, "\\$")}'`;
   }
-  return `$${TAG}${value}$${TAG}`;
+  return `$${TAG}$${value}$${TAG}$`;
 }
 
 function jsonb(value: unknown): string {
